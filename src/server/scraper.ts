@@ -163,18 +163,14 @@ export async function queryTickets(
 
       if (currentTrainNo !== trainNo) continue;
 
-      const canWebBuy = fields[11]; // Y=可购买, N=不可购买(未开售/停售)
-      const isOnSale = canWebBuy === 'Y';
-
       // 12306 返回了所有座位类型的数据，全部解析存储
+      // 注意：不依赖 canWebBuy 字段，直接根据 raw 值判断
+      // canWebBuy='N' 时网页仍可能显示"候补"（票已售完但可候补）
       for (const [seatType, idx] of Object.entries(SEAT_INDEX_MAP)) {
         const raw = fields[idx];
         let available: number | string = '--';
 
-        if (!isOnSale) {
-          // 未开售：所有座位保持 '--'
-          available = '--';
-        } else if (raw === '有') {
+        if (raw === '有') {
           available = '有';
         } else if (raw === '候补') {
           available = '候补';
@@ -185,6 +181,7 @@ export async function queryTickets(
           // 固定座位无票可候补；无座(wz)不能候补，保持 '--'
           available = '候补';
         }
+        // raw === ''（无此座席）或 raw === '无' 且是 wz → 保持 '--'
 
         results.push({
           date,
