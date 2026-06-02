@@ -189,4 +189,131 @@ api.get('/seat-labels', (c) => {
   return c.json(SEAT_LABELS);
 });
 
+// Help documentation for AI Agent
+api.get('/help', (c) => {
+  return c.json({
+    description: 'Rail Watch — 12306 余票监控工具 API。用于查询/配置车次、查看余票、标记已购状态。',
+    baseUrl: '/api',
+    dataDir: '~/.rail-watch/',
+    endpoints: [
+      {
+        path: '/config',
+        method: 'GET',
+        description: '获取当前配置（车次列表、监控天数、轮询间隔等）',
+        response: {
+          trains: 'TrainConfig[]',
+          daysAhead: 'number (默认15)',
+          intervalMinutes: 'number (默认5)',
+          hideHolidays: 'boolean?',
+          hideWeekends: 'boolean?',
+        },
+      },
+      {
+        path: '/config',
+        method: 'POST',
+        description: '更新配置字段（支持部分更新，trains 不会被覆盖）',
+        body: '{ daysAhead?, intervalMinutes?, hideHolidays?, hideWeekends? }',
+        example: { body: { daysAhead: 20, hideHolidays: true } },
+      },
+      {
+        path: '/trains',
+        method: 'POST',
+        description: '添加监听车次',
+        body: {
+          trainNo: 'string (如 D6722)',
+          fromStation: 'string (如 张家口)',
+          toStation: 'string (如 清河)',
+          seatTypes: "string[] (可选, 默认 ['ze']) — ze=二等座, zy=一等座, swz=商务座, yw=硬卧, rw=软卧, yz=硬座, wz=无座",
+        },
+      },
+      {
+        path: '/trains/:id',
+        method: 'DELETE',
+        description: '删除指定车次',
+      },
+      {
+        path: '/tickets',
+        method: 'GET',
+        description: '获取所有余票数据（按 trainNo+date 分组），包含节假日信息',
+        response: {
+          tickets: [
+            {
+              trainNo: 'string',
+              date: 'string (YYYY-MM-DD)',
+              fromStation: 'string',
+              toStation: 'string',
+              seats: "Record<seatType, { available: number|'有'|'--', queryTime: string }>",
+              bought: 'boolean',
+              boughtSeatType: 'string?',
+            },
+          ],
+          holidays: "Record<date, holidayName> — 如 { '2026-06-19': '端午节' }",
+          config: '{ daysAhead, intervalMinutes, hideHolidays?, hideWeekends? }',
+        },
+        note: 'available 值为 "有" 表示有票(数量不详)，数字表示具体余票数，"--" 表示无数据',
+      },
+      {
+        path: '/bought',
+        method: 'POST',
+        description: '标记某车次某日期为已购',
+        body: {
+          trainNo: 'string',
+          date: 'string (YYYY-MM-DD)',
+          seatType: "string (可选, 如 'ze')",
+        },
+        note: '标记已购后 scheduler 会自动跳过该车次+日期的抓取',
+      },
+      {
+        path: '/bought/:trainNo/:date',
+        method: 'DELETE',
+        description: '取消已购标记',
+        note: '取消后下一轮 scheduler 会重新抓取',
+      },
+      {
+        path: '/scheduler',
+        method: 'GET',
+        description: '查询调度器运行状态',
+        response: '{ running: boolean }',
+      },
+      {
+        path: '/scheduler/start',
+        method: 'POST',
+        description: '启动调度器（自动循环抓取余票）',
+      },
+      {
+        path: '/scheduler/stop',
+        method: 'POST',
+        description: '停止调度器',
+      },
+      {
+        path: '/seat-labels',
+        method: 'GET',
+        description: '座位类型标签映射',
+        response: '{ ze: "二等座", zy: "一等座", swz: "商务座", yw: "硬卧", rw: "软卧", yz: "硬座", wz: "无座" }',
+      },
+      {
+        path: '/help',
+        method: 'GET',
+        description: '返回本帮助文档',
+      },
+    ],
+    seatTypes: {
+      ze: '二等座',
+      zy: '一等座',
+      swz: '商务座',
+      yw: '硬卧',
+      rw: '软卧',
+      yz: '硬座',
+      wz: '无座',
+    },
+    tips: [
+      '查询余票用 GET /tickets，返回的 holidays 字段可用于识别法定节假日',
+      '标记已购用 POST /bought，取消用 DELETE /bought/:trainNo/:date',
+      'scheduler 每 5 分钟一轮，任务分散执行，最小间隔 3 秒',
+      '已购但无 ticket 数据的组合也会出现在 /tickets 返回中（bought=true, seats={}）',
+      '所有数据持久化在 ~/.rail-watch/ 下的 JSON 文件中',
+    ],
+  });
+});
+
 export default api;
