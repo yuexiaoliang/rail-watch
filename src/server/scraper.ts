@@ -163,16 +163,16 @@ export async function queryTickets(
 
       if (currentTrainNo !== trainNo) continue;
 
-      for (const seatType of seatTypes) {
-        const idx = SEAT_INDEX_MAP[seatType];
-        if (idx === undefined) continue;
-
+      // 12306 返回了所有座位类型的数据，全部解析存储
+      for (const [seatType, idx] of Object.entries(SEAT_INDEX_MAP)) {
         const raw = fields[idx];
         let available: number | string = '--';
 
         if (raw && raw !== '' && raw !== '无') {
           if (raw === '有') {
             available = '有';
+          } else if (raw === '候补') {
+            available = '候补';
           } else {
             const num = parseInt(raw, 10);
             if (!isNaN(num)) available = num;

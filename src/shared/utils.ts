@@ -37,6 +37,7 @@ export function generateDates(daysAhead: number): string[] {
 
 export function seatDisplay(available: number | string | undefined): { text: string; color: string } {
   if (available === undefined) return { text: '--', color: 'text-gray-300' };
+  if (available === '候补') return { text: '候补', color: 'text-orange-500' };
   if (available === '有') return { text: '有', color: 'text-green-600 font-medium' };
   if (typeof available === 'number') {
     if (available > 0) return { text: String(available), color: 'text-green-600 font-medium' };
