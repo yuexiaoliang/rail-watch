@@ -91,6 +91,8 @@ import { something } from '../shared/utils';     // ❌ 运行时报错
 
 `available` 的可能值：`number`（余票数）、`'有'`（有票数量不详）、`'候补'`（可候补）、`'--'`（无数据/无此座席）。
 
+> ⚠️ **重要领域知识**：12306 数据解析有很多隐蔽的坑（`canWebBuy` 含义、`raw=''` vs `raw='无'` 的区别、无座不能候补等）。详细经验记录见 [`.claude/12306-scraper-notes.md`](.claude/12306-scraper-notes.md)。
+
 ### 调度器 `src/server/scheduler.ts`
 
 - 每轮生成所有 `train × date` 组合的任务列表
