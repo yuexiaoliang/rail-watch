@@ -1,5 +1,16 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
+import {
+  SEAT_TYPES,
+  SEAT_LABELS,
+  type TrainConfig,
+  type AppConfig,
+  type TicketInfo,
+  type BoughtRecord,
+} from '../shared/types.js';
+
+export { SEAT_TYPES, SEAT_LABELS };
+export type { TrainConfig, AppConfig, TicketInfo, BoughtRecord };
 
 const DATA_DIR = process.env.DATA_DIR || join(process.env.HOME || '/home/yuexiaoliang', '.rail-watch');
 const LOGS_DIR = join(DATA_DIR, 'logs');
@@ -24,62 +35,6 @@ function readJson<T>(filename: string, defaultValue: T): T {
 function writeJson(filename: string, data: unknown) {
   const path = join(DATA_DIR, filename);
   writeFileSync(path, JSON.stringify(data, null, 2), 'utf-8');
-}
-
-// Seat type mapping
-export const SEAT_TYPES: Record<string, string> = {
-  '二等座': 'ze',
-  '一等座': 'zy',
-  '商务座': 'swz',
-  '硬卧': 'yw',
-  '软卧': 'rw',
-  '硬座': 'yz',
-  '无座': 'wz',
-};
-
-export const SEAT_LABELS: Record<string, string> = {
-  ze: '二等座',
-  zy: '一等座',
-  swz: '商务座',
-  yw: '硬卧',
-  rw: '软卧',
-  yz: '硬座',
-  wz: '无座',
-};
-
-// Types
-export interface TrainConfig {
-  id: string;
-  trainNo: string;
-  fromStation: string;
-  toStation: string;
-  seatTypes: string[]; // keys like 'ze', 'zy', 'yw'
-  enabled: boolean;
-}
-
-export interface AppConfig {
-  trains: TrainConfig[];
-  daysAhead: number;
-  intervalMinutes: number;
-  hideHolidays?: boolean;
-  hideWeekends?: boolean;
-}
-
-export interface TicketInfo {
-  date: string;
-  trainNo: string;
-  fromStation: string;
-  toStation: string;
-  seatType: string;
-  available: number | string;
-  queryTime: string;
-}
-
-export interface BoughtRecord {
-  trainNo: string;
-  date: string;
-  seatType: string;
-  boughtAt: string;
 }
 
 // Config

@@ -1,5 +1,5 @@
 import { chromium, Browser } from 'playwright';
-import type { TicketInfo } from './store.js';
+import type { TicketInfo } from '../shared/types.js';
 
 let browser: Browser | null = null;
 let stationMap: Map<string, string> | null = null;

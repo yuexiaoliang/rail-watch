@@ -13,6 +13,12 @@
       "skillPath": "skills/radix-motion/SKILL.md",
       "computedHash": "4bcc1812a6e349147036a180e7eea73ffbfc8989cea92bea4e05d0f0a29c274f"
     },
+    "shadcn": {
+      "source": "shadcn/ui",
+      "sourceType": "github",
+      "skillPath": "skills/shadcn/SKILL.md",
+      "computedHash": "8f8bcc9024aa068245fac646d654a18c80280e4b06112ccd3e691a8c96cd66bd"
+    },
     "tailwind-design-system": {
       "source": "wshobson/agents",
       "sourceType": "github",

@@ -6,6 +6,7 @@ import {
   isBought,
   type TicketInfo,
 } from './store.js';
+import { generateDates } from '../shared/utils.js';
 
 interface Task {
   trainNo: string;
@@ -17,24 +18,6 @@ interface Task {
 
 let running = false;
 let abortController: AbortController | null = null;
-
-function generateDates(daysAhead: number): string[] {
-  const dates: string[] = [];
-  const today = new Date();
-  for (let i = 0; i < daysAhead; i++) {
-    const d = new Date(today);
-    d.setDate(d.getDate() + i);
-    dates.push(formatDate(d));
-  }
-  return dates;
-}
-
-function formatDate(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
 
 function generateTasks(): Task[] {
   const config = getConfig();

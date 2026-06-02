@@ -7,9 +7,8 @@ import {
   getBoughtRecords,
   addBoughtRecord,
   removeBoughtRecord,
-  SEAT_LABELS,
-  type TrainConfig,
 } from './store.js';
+import { SEAT_LABELS, type TrainConfig } from '../shared/types.js';
 import { startScheduler, stopScheduler, isRunning } from './scheduler.js';
 
 const api = new Hono();
@@ -26,7 +25,7 @@ api.post('/config', async (c) => {
   const updated: typeof current = {
     ...current,
     ...body,
-    trains: body.trains || current.trains,
+    trains: body.trains ?? current.trains,
   };
   saveConfig(updated);
   return c.json(updated);
