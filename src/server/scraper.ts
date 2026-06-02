@@ -163,20 +163,27 @@ export async function queryTickets(
 
       if (currentTrainNo !== trainNo) continue;
 
+      const canWebBuy = fields[11]; // Y=可购买, N=不可购买(未开售/停售)
+      const isOnSale = canWebBuy === 'Y';
+
       // 12306 返回了所有座位类型的数据，全部解析存储
       for (const [seatType, idx] of Object.entries(SEAT_INDEX_MAP)) {
         const raw = fields[idx];
         let available: number | string = '--';
 
-        if (raw && raw !== '' && raw !== '无') {
-          if (raw === '有') {
-            available = '有';
-          } else if (raw === '候补') {
-            available = '候补';
-          } else {
-            const num = parseInt(raw, 10);
-            if (!isNaN(num)) available = num;
-          }
+        if (!isOnSale) {
+          // 未开售：所有座位保持 '--'
+          available = '--';
+        } else if (raw === '有') {
+          available = '有';
+        } else if (raw === '候补') {
+          available = '候补';
+        } else if (raw && raw !== '' && raw !== '无') {
+          const num = parseInt(raw, 10);
+          if (!isNaN(num)) available = num;
+        } else if (raw === '无' && seatType !== 'wz') {
+          // 固定座位无票可候补；无座(wz)不能候补，保持 '--'
+          available = '候补';
         }
 
         results.push({
