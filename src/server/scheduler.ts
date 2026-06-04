@@ -3,7 +3,7 @@ import {
   getConfig,
   getTickets,
   updateTicket,
-  isBought,
+  shouldSkipScrape,
   type TicketInfo,
 } from './store.js';
 import { generateDates } from '../shared/utils.js';
@@ -27,8 +27,8 @@ function generateTasks(): Task[] {
   for (const train of config.trains) {
     if (!train.enabled) continue;
     for (const date of dates) {
-      // Skip if already bought for this train+date
-      if (isBought(train.trainNo, date)) continue;
+      // Skip if already bought or skipped for this train+date
+      if (shouldSkipScrape(train.trainNo, date)) continue;
 
       tasks.push({
         trainNo: train.trainNo,
@@ -73,6 +73,7 @@ async function runTask(task: Task): Promise<void> {
         seatType: r.seatType,
         available: r.available,
         queryTime: now,
+        departureTime: r.departureTime,
       };
       updateTicket(ticket);
     }
@@ -111,8 +112,8 @@ export async function startScheduler() {
       for (const task of tasks) {
         if (!running || signal.aborted) break;
 
-        // Double-check: skip if bought during this round
-        if (isBought(task.trainNo, task.date)) continue;
+        // Double-check: skip if bought or skipped during this round
+        if (shouldSkipScrape(task.trainNo, task.date)) continue;
 
         await runTask(task);
         await sleep(delay, signal);

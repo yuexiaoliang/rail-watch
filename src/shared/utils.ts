@@ -35,6 +35,9 @@ export function generateDates(daysAhead: number): string[] {
   return dates;
 }
 
+import { STATUS_LABELS as _STATUS_LABELS } from './types.js';
+export { _STATUS_LABELS as STATUS_LABELS };
+
 export function seatDisplay(available: number | string | undefined): { text: string; color: string } {
   if (available === undefined) return { text: '--', color: 'text-gray-300' };
   if (available === '候补') return { text: '候补', color: 'text-orange-500' };

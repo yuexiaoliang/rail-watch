@@ -21,6 +21,16 @@ export const SEAT_TYPES: Record<string, string> = {
 
 export const SEAT_OPTIONS = Object.entries(SEAT_LABELS).map(([key, label]) => ({ key, label }));
 
+// Cell status types
+export type CellStatus = 'none' | 'bought' | 'waiting' | 'skipped';
+
+export const STATUS_LABELS: Record<CellStatus, string> = {
+  none: '未购',
+  bought: '已购',
+  waiting: '已候补',
+  skipped: '跳过',
+};
+
 // Domain types
 export interface TrainConfig {
   id: string;
@@ -52,6 +62,8 @@ export interface TicketGroup {
   seats: Record<string, SeatInfo>;
   bought: boolean;
   boughtSeatType?: string;
+  departureTime?: string;
+  status?: CellStatus;
 }
 
 export interface TicketInfo {
@@ -62,6 +74,7 @@ export interface TicketInfo {
   seatType: string;
   available: number | string;
   queryTime: string;
+  departureTime?: string;
 }
 
 export interface BoughtRecord {
@@ -69,6 +82,7 @@ export interface BoughtRecord {
   date: string;
   seatType: string;
   boughtAt: string;
+  status?: 'bought' | 'waiting' | 'skipped';
 }
 
 // API response types

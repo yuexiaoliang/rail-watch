@@ -7,6 +7,8 @@ import {
   getBoughtRecords,
   addBoughtRecord,
   removeBoughtRecord,
+  getCellStatus,
+  setCellStatus,
 } from './store.js';
 import { SEAT_LABELS, type TrainConfig } from '../shared/types.js';
 import { startScheduler, stopScheduler, isRunning } from './scheduler.js';
@@ -72,6 +74,8 @@ api.get('/tickets', (c) => {
     seats: Record<string, { available: number | string; queryTime: string }>;
     bought: boolean;
     boughtSeatType?: string;
+    departureTime?: string;
+    status?: import('../shared/types.js').CellStatus;
   }> = {};
 
   // Build a map from trainNo to station info for bought records without tickets
@@ -84,6 +88,7 @@ api.get('/tickets', (c) => {
     const groupKey = `${ticket.trainNo}_${ticket.date}`;
     if (!grouped[groupKey]) {
       const boughtRecord = bought[groupKey];
+      const status = getCellStatus(ticket.trainNo, ticket.date);
       grouped[groupKey] = {
         trainNo: ticket.trainNo,
         date: ticket.date,
@@ -92,18 +97,25 @@ api.get('/tickets', (c) => {
         seats: {},
         bought: !!boughtRecord,
         boughtSeatType: boughtRecord?.seatType,
+        departureTime: ticket.departureTime,
+        status,
       };
     }
     grouped[groupKey].seats[ticket.seatType] = {
       available: ticket.available,
       queryTime: ticket.queryTime,
     };
+    // 保存 departureTime（如果之前没有）
+    if (ticket.departureTime && !grouped[groupKey].departureTime) {
+      grouped[groupKey].departureTime = ticket.departureTime;
+    }
   }
 
   // Include bought records that have no ticket data yet
   for (const [key, record] of Object.entries(bought)) {
     if (!grouped[key]) {
       const stations = trainMap.get(record.trainNo);
+      const status = getCellStatus(record.trainNo, record.date);
       grouped[key] = {
         trainNo: record.trainNo,
         date: record.date,
@@ -112,6 +124,7 @@ api.get('/tickets', (c) => {
         seats: {},
         bought: true,
         boughtSeatType: record.seatType,
+        status,
       };
     }
   }
@@ -141,26 +154,25 @@ api.get('/tickets', (c) => {
   });
 });
 
-// Mark as bought
+// Set cell status (bought/waiting/skipped/none)
 api.post('/bought', async (c) => {
   const body = await c.req.json();
-  const { trainNo, date, seatType } = body;
+  const { trainNo, date, status = 'bought', seatType } = body;
 
   if (!trainNo || !date) {
     return c.json({ error: 'trainNo and date required' }, 400);
   }
 
-  addBoughtRecord({
-    trainNo,
-    date,
-    seatType: seatType || '',
-    boughtAt: new Date().toISOString(),
-  });
+  if (status === 'none') {
+    removeBoughtRecord(trainNo, date);
+  } else {
+    setCellStatus(trainNo, date, status, seatType);
+  }
 
   return c.json({ success: true });
 });
 
-// Unmark as bought
+// Unmark as bought (set to none)
 api.delete('/bought/:trainNo/:date', (c) => {
   const trainNo = c.req.param('trainNo');
   const date = c.req.param('date');

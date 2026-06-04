@@ -35,11 +35,11 @@ export const api = {
 
   getTickets: () => request<TicketsResponse>('/api/tickets'),
 
-  markBought: (trainNo: string, date: string, seatType?: string) =>
+  setCellStatus: (trainNo: string, date: string, status: string, seatType?: string) =>
     request<{ success: boolean }>('/api/bought', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ trainNo, date, seatType }),
+      body: JSON.stringify({ trainNo, date, status, seatType }),
     }),
 
   unmarkBought: (trainNo: string, date: string) =>

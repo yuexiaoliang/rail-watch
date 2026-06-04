@@ -58,6 +58,7 @@ interface RawTicket {
   toStation: string;
   seatType: string;
   available: number | string;
+  departureTime?: string;
 }
 
 // 12306 seat type index mapping based on actual response format
@@ -163,6 +164,9 @@ export async function queryTickets(
 
       if (currentTrainNo !== trainNo) continue;
 
+      // 提取出发时间（fields[8] 为出发时间）
+      const departureTime = fields[8] || undefined;
+
       // 12306 返回了所有座位类型的数据，全部解析存储
       // 注意：不依赖 canWebBuy 字段，直接根据 raw 值判断
       // canWebBuy='N' 时网页仍可能显示"候补"（票已售完但可候补）
@@ -190,6 +194,7 @@ export async function queryTickets(
           toStation,
           seatType,
           available,
+          departureTime,
         });
       }
 

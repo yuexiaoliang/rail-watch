@@ -7,6 +7,7 @@ import {
   type AppConfig,
   type TicketInfo,
   type BoughtRecord,
+  type CellStatus,
 } from '../shared/types.js';
 
 export { SEAT_TYPES, SEAT_LABELS };
@@ -93,4 +94,40 @@ export function isBought(trainNo: string, date: string): boolean {
   const records = getBoughtRecords();
   const key = `${trainNo}_${date}`;
   return key in records;
+}
+
+// Cell status: get/set/check
+export function getCellStatus(trainNo: string, date: string): CellStatus {
+  const records = getBoughtRecords();
+  const key = `${trainNo}_${date}`;
+  const record = records[key];
+  if (!record) return 'none';
+  return record.status || 'bought';
+}
+
+export function setCellStatus(
+  trainNo: string,
+  date: string,
+  status: CellStatus,
+  seatType?: string,
+) {
+  const records = getBoughtRecords();
+  const key = `${trainNo}_${date}`;
+  if (status === 'none') {
+    delete records[key];
+  } else {
+    records[key] = {
+      trainNo,
+      date,
+      seatType: seatType || '',
+      boughtAt: new Date().toISOString(),
+      status,
+    };
+  }
+  saveBoughtRecords(records);
+}
+
+export function shouldSkipScrape(trainNo: string, date: string): boolean {
+  const status = getCellStatus(trainNo, date);
+  return status === 'bought' || status === 'skipped';
 }

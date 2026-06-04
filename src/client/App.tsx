@@ -9,8 +9,7 @@ import {
   SettingsPanel,
 } from './components/index.js';
 import { generateDates } from '../shared/utils.js';
-import { Badge } from './components/ui/badge.js';
-import type { AppConfig, TicketGroup } from '../shared/types.js';
+import type { AppConfig, TicketGroup, CellStatus } from '../shared/types.js';
 
 export default function App() {
   const [config, setConfig] = useState<AppConfig | null>(null);
@@ -52,12 +51,12 @@ export default function App() {
     return () => clearInterval(timer);
   }, [fetchData]);
 
-  const handleToggleBought = useCallback(
-    async (trainNo: string, date: string, isBought: boolean, defaultSeat?: string) => {
-      if (isBought) {
+  const handleSetCellStatus = useCallback(
+    async (trainNo: string, date: string, status: CellStatus, defaultSeat?: string) => {
+      if (status === 'none') {
         await api.unmarkBought(trainNo, date);
       } else {
-        await api.markBought(trainNo, date, defaultSeat);
+        await api.setCellStatus(trainNo, date, status, defaultSeat);
       }
       fetchData();
     },
@@ -81,7 +80,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header activeTab={activeTab} onToggleTab={handleToggleTab} />
+      <Header activeTab={activeTab} onToggleTab={handleToggleTab} schedulerRunning={schedulerRunning} />
 
       <main className="max-w-[1400px] mx-auto px-4 py-6">
         {activeTab === 'tickets' && (
@@ -93,16 +92,6 @@ export default function App() {
               </div>
             ) : (
               <>
-                <div className="flex items-center gap-4">
-                  <Badge
-                    variant={schedulerRunning ? 'default' : 'secondary'}
-                    className={
-                      schedulerRunning ? 'bg-green-600 hover:bg-green-700' : ''
-                    }
-                  >
-                    调度器: {schedulerRunning ? '运行中' : '已停止'}
-                  </Badge>
-                </div>
                 <FilterBar
                   hideHolidays={hideHolidays}
                   hideWeekends={hideWeekends}
@@ -118,7 +107,7 @@ export default function App() {
                   holidays={holidays}
                   hideHolidays={hideHolidays}
                   hideWeekends={hideWeekends}
-                  onToggleBought={handleToggleBought}
+                  onSetCellStatus={handleSetCellStatus}
                 />
               </>
             )}
