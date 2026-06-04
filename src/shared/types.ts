@@ -27,7 +27,7 @@ export type CellStatus = 'none' | 'bought' | 'waiting' | 'skipped';
 export const STATUS_LABELS: Record<CellStatus, string> = {
   none: '未购',
   bought: '已购',
-  waiting: '已候补',
+  waiting: '候补中',
   skipped: '跳过',
 };
 
