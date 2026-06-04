@@ -1,20 +1,14 @@
 import { memo } from 'react';
-import { Train, CalendarDays, Settings } from 'lucide-react';
+import { Train, Settings, ArrowLeft } from 'lucide-react';
 import { Button } from '../components/ui/button.js';
 
 interface HeaderProps {
-  activeTab: 'tickets' | 'calendar' | 'config';
-  onTabChange: (tab: 'tickets' | 'calendar' | 'config') => void;
+  activeTab: 'tickets' | 'config';
+  onToggleTab: () => void;
   schedulerRunning?: boolean;
 }
 
-const TABS: { key: 'tickets' | 'calendar' | 'config'; label: string; icon: React.ReactNode }[] = [
-  { key: 'tickets', label: '余票', icon: <Train className="w-4 h-4" /> },
-  { key: 'calendar', label: '日历', icon: <CalendarDays className="w-4 h-4" /> },
-  { key: 'config', label: '配置', icon: <Settings className="w-4 h-4" /> },
-];
-
-export const Header = memo(function Header({ activeTab, onTabChange, schedulerRunning }: HeaderProps) {
+export const Header = memo(function Header({ activeTab, onToggleTab, schedulerRunning }: HeaderProps) {
   return (
     <header className="bg-background border-b">
       <div className="max-w-[1400px] mx-auto px-4 py-4 flex items-center justify-between">
@@ -22,25 +16,6 @@ export const Header = memo(function Header({ activeTab, onTabChange, schedulerRu
           <Train className="w-6 h-6" />
           Rail Watch
         </h1>
-
-        {/* 标签导航 */}
-        <div className="flex items-center bg-muted/50 rounded-lg p-0.5">
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => onTabChange(tab.key)}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-                activeTab === tab.key
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
         <div className="flex items-center gap-3">
           {/* 调度器状态 */}
           <div
@@ -49,6 +24,13 @@ export const Header = memo(function Header({ activeTab, onTabChange, schedulerRu
             }`}
             title={schedulerRunning ? '调度器运行中' : '调度器已停止'}
           />
+          <Button variant="outline" size="icon" onClick={onToggleTab}>
+            {activeTab === 'tickets' ? (
+              <Settings className="w-4 h-4" />
+            ) : (
+              <ArrowLeft className="w-4 h-4" />
+            )}
+          </Button>
         </div>
       </div>
     </header>

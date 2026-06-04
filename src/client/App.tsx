@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from './api.js';
 import {
   Header,
@@ -20,7 +20,8 @@ export default function App() {
   const [hideWeekends, setHideWeekends] = useState(false);
   const [schedulerRunning, setSchedulerRunning] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'tickets' | 'calendar' | 'config'>('tickets');
+  const [activeTab, setActiveTab] = useState<'tickets' | 'config'>('tickets');
+  const tableRef = useRef<HTMLDivElement>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -64,8 +65,19 @@ export default function App() {
     [fetchData]
   );
 
-  const handleTabChange = useCallback((tab: 'tickets' | 'calendar' | 'config') => {
-    setActiveTab(tab);
+  const handleToggleTab = useCallback(() => {
+    setActiveTab((tab) => (tab === 'tickets' ? 'config' : 'tickets'));
+  }, []);
+
+  // 点击日历日期，滚动到表格对应行
+  const handleDateClick = useCallback((date: string) => {
+    const row = document.querySelector(`[data-date="${date}"]`);
+    if (row) {
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // 高亮一下
+      row.classList.add('bg-yellow-50');
+      setTimeout(() => row.classList.remove('bg-yellow-50'), 1500);
+    }
   }, []);
 
   const dates = config ? generateDates(config.daysAhead) : [];
@@ -81,41 +93,45 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header activeTab={activeTab} onTabChange={handleTabChange} schedulerRunning={schedulerRunning} />
+      <Header activeTab={activeTab} onToggleTab={handleToggleTab} schedulerRunning={schedulerRunning} />
 
       <main className="max-w-[1400px] mx-auto px-4 py-6">
         {activeTab === 'tickets' && (
-          <div className="space-y-4">
-            {trains.length === 0 ? (
-              <div className="text-center py-20 text-muted-foreground">
-                <p>暂无监听车次</p>
-                <p className="text-sm mt-2">请到「配置管理」添加车次</p>
-              </div>
-            ) : (
-              <>
-                <FilterBar
-                  hideHolidays={hideHolidays}
-                  hideWeekends={hideWeekends}
-                  holidaysCount={Object.keys(holidays).length}
-                  onHideHolidaysChange={setHideHolidays}
-                  onHideWeekendsChange={setHideWeekends}
-                  onRefresh={fetchData}
-                />
-                <TicketsTable
-                  trains={trains}
-                  tickets={tickets}
-                  dates={dates}
-                  holidays={holidays}
-                  hideHolidays={hideHolidays}
-                  hideWeekends={hideWeekends}
-                  onSetCellStatus={handleSetCellStatus}
-                />
-              </>
-            )}
+          <div className="flex gap-6">
+            {/* 左侧日历 */}
+            <CalendarView onDateClick={handleDateClick} />
+
+            {/* 右侧余票表格 */}
+            <div className="flex-1 min-w-0 space-y-4" ref={tableRef}>
+              {trains.length === 0 ? (
+                <div className="text-center py-20 text-muted-foreground">
+                  <p>暂无监听车次</p>
+                  <p className="text-sm mt-2">请到「配置管理」添加车次</p>
+                </div>
+              ) : (
+                <>
+                  <FilterBar
+                    hideHolidays={hideHolidays}
+                    hideWeekends={hideWeekends}
+                    holidaysCount={Object.keys(holidays).length}
+                    onHideHolidaysChange={setHideHolidays}
+                    onHideWeekendsChange={setHideWeekends}
+                    onRefresh={fetchData}
+                  />
+                  <TicketsTable
+                    trains={trains}
+                    tickets={tickets}
+                    dates={dates}
+                    holidays={holidays}
+                    hideHolidays={hideHolidays}
+                    hideWeekends={hideWeekends}
+                    onSetCellStatus={handleSetCellStatus}
+                  />
+                </>
+              )}
+            </div>
           </div>
         )}
-
-        {activeTab === 'calendar' && <CalendarView />}
 
         {activeTab === 'config' && (
           <div className="space-y-6">

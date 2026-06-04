@@ -120,7 +120,7 @@ export const TicketsTable = memo(function TicketsTable({
             else if (isWeekend) rowBg = 'bg-blue-50/50';
 
             return (
-              <TableRow key={date} className={`hover:bg-transparent ${rowBg}`}>
+              <TableRow key={date} data-date={date} className={`hover:bg-transparent ${rowBg}`}>
                 <td
                   className={`px-3 py-3 whitespace-nowrap font-medium sticky left-0 border-r z-10 w-24 ${
                     isHoliday ? 'bg-red-50 text-red-700' : isWeekend ? 'bg-blue-50/80' : 'bg-background'
