@@ -7,6 +7,7 @@ import {
   AddTrainForm,
   TrainList,
   SettingsPanel,
+  CalendarView,
 } from './components/index.js';
 import { generateDates } from '../shared/utils.js';
 import type { AppConfig, TicketGroup, CellStatus } from '../shared/types.js';
@@ -19,7 +20,7 @@ export default function App() {
   const [hideWeekends, setHideWeekends] = useState(false);
   const [schedulerRunning, setSchedulerRunning] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'tickets' | 'config'>('tickets');
+  const [activeTab, setActiveTab] = useState<'tickets' | 'calendar' | 'config'>('tickets');
 
   const fetchData = useCallback(async () => {
     try {
@@ -63,8 +64,8 @@ export default function App() {
     [fetchData]
   );
 
-  const handleToggleTab = useCallback(() => {
-    setActiveTab((tab) => (tab === 'tickets' ? 'config' : 'tickets'));
+  const handleTabChange = useCallback((tab: 'tickets' | 'calendar' | 'config') => {
+    setActiveTab(tab);
   }, []);
 
   const dates = config ? generateDates(config.daysAhead) : [];
@@ -80,7 +81,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header activeTab={activeTab} onToggleTab={handleToggleTab} schedulerRunning={schedulerRunning} />
+      <Header activeTab={activeTab} onTabChange={handleTabChange} schedulerRunning={schedulerRunning} />
 
       <main className="max-w-[1400px] mx-auto px-4 py-6">
         {activeTab === 'tickets' && (
@@ -113,6 +114,8 @@ export default function App() {
             )}
           </div>
         )}
+
+        {activeTab === 'calendar' && <CalendarView />}
 
         {activeTab === 'config' && (
           <div className="space-y-6">

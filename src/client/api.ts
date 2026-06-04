@@ -3,6 +3,7 @@ import type {
   TrainConfig,
   TicketsResponse,
   SchedulerStatus,
+  CalendarResult,
 } from '../shared/types.js';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -52,4 +53,12 @@ export const api = {
 
   stopScheduler: () =>
     request<SchedulerStatus>('/api/scheduler/stop', { method: 'POST' }),
+
+  getCalendar: (baseDate?: string, days?: number) => {
+    const params = new URLSearchParams();
+    if (baseDate) params.set('date', baseDate);
+    if (days) params.set('days', String(days));
+    const query = params.toString();
+    return request<CalendarResult>(`/api/calendar${query ? '?' + query : ''}`);
+  },
 };

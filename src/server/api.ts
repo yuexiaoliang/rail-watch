@@ -12,6 +12,7 @@ import {
 } from './store.js';
 import { SEAT_LABELS, type TrainConfig } from '../shared/types.js';
 import { startScheduler, stopScheduler, isRunning } from './scheduler.js';
+import { generateCalendar } from './holiday-utils.js';
 
 const api = new Hono();
 
@@ -193,6 +194,14 @@ api.post('/scheduler/start', (c) => {
 api.post('/scheduler/stop', (c) => {
   stopScheduler();
   return c.json({ running: false });
+});
+
+// Calendar / holiday info
+api.get('/calendar', (c) => {
+  const baseDate = c.req.query('date');
+  const days = parseInt(c.req.query('days') || '30', 10);
+  const result = generateCalendar(baseDate, days);
+  return c.json(result);
 });
 
 // Seat labels reference

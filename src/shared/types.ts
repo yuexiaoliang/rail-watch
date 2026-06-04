@@ -100,3 +100,30 @@ export interface TicketsResponse {
 export interface SchedulerStatus {
   running: boolean;
 }
+
+// Calendar types
+export interface CalendarDayInfo {
+  date: string;
+  dayOfWeek: number;
+  dayName: string;
+  isHoliday: boolean;
+  isWeekend: boolean;
+  isWorkday: boolean;
+  isPublicWorkday: boolean;
+  holidayName: string | null;
+  specialTag: string | null;
+}
+
+export interface HolidayRange {
+  name: string;
+  startDate: string;
+  endDate: string;
+  days: number;
+}
+
+export interface CalendarResult {
+  baseDate: string;
+  days: CalendarDayInfo[];
+  workdayCount: number;
+  holidayRanges: HolidayRange[];
+}
