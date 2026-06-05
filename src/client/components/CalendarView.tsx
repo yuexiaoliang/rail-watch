@@ -91,7 +91,7 @@ export const CalendarView = memo(function CalendarView({ onDateClick }: Calendar
   };
 
   return (
-    <div className="space-y-4 w-[320px] shrink-0">
+    <div className="space-y-4 w-full lg:w-[320px] shrink-0">
       {/* 日历 */}
       <div className="bg-card border rounded-xl p-3">
         <style>{`

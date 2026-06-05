@@ -97,12 +97,12 @@ export default function App() {
 
       <main className="max-w-[1400px] mx-auto px-4 py-6">
         {activeTab === 'tickets' && (
-          <div className="flex gap-6">
+          <div className="flex flex-col lg:flex-row gap-6">
             {/* 左侧日历 */}
             <CalendarView onDateClick={handleDateClick} />
 
             {/* 右侧余票表格 */}
-            <div className="flex-1 min-w-0 space-y-4" ref={tableRef}>
+            <div className="flex-1 min-w-0 space-y-4 overflow-x-auto" ref={tableRef}>
               {trains.length === 0 ? (
                 <div className="text-center py-20 text-muted-foreground">
                   <p>暂无监听车次</p>
