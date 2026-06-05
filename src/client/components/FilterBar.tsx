@@ -5,7 +5,6 @@ import { Switch } from '../components/ui/switch.js';
 interface FilterBarProps {
   hideHolidays: boolean;
   hideWeekends: boolean;
-  holidaysCount: number;
   onHideHolidaysChange: (value: boolean) => void;
   onHideWeekendsChange: (value: boolean) => void;
   onRefresh: () => void;
@@ -14,7 +13,6 @@ interface FilterBarProps {
 export const FilterBar = memo(function FilterBar({
   hideHolidays,
   hideWeekends,
-  holidaysCount,
   onHideHolidaysChange,
   onHideWeekendsChange,
   onRefresh,
@@ -53,11 +51,6 @@ export const FilterBar = memo(function FilterBar({
           隐藏周六日
         </label>
       </div>
-      {holidaysCount > 0 && (
-        <span className="text-xs text-muted-foreground">
-          本期包含 {holidaysCount} 天节假日
-        </span>
-      )}
     </div>
   );
 });

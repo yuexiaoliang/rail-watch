@@ -120,7 +120,6 @@ export default function App() {
                 <FilterBar
                   hideHolidays={hideHolidays}
                   hideWeekends={hideWeekends}
-                  holidaysCount={Object.keys(holidays).length}
                   onHideHolidaysChange={setHideHolidays}
                   onHideWeekendsChange={setHideWeekends}
                   onRefresh={fetchData}
