@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api } from './api.js';
 import {
   Header,
@@ -7,32 +7,33 @@ import {
   AddTrainForm,
   TrainList,
   SettingsPanel,
-  CalendarView,
 } from './components/index.js';
 import { generateDates } from '../shared/utils.js';
-import type { AppConfig, TicketGroup, CellStatus } from '../shared/types.js';
+import type { AppConfig, TicketGroup, CellStatus, CalendarResult } from '../shared/types.js';
 
 export default function App() {
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [tickets, setTickets] = useState<TicketGroup[]>([]);
   const [holidays, setHolidays] = useState<Record<string, string>>({});
+  const [calendar, setCalendar] = useState<CalendarResult | null>(null);
   const [hideHolidays, setHideHolidays] = useState(false);
   const [hideWeekends, setHideWeekends] = useState(false);
   const [schedulerRunning, setSchedulerRunning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'tickets' | 'config'>('tickets');
-  const tableRef = useRef<HTMLDivElement>(null);
 
   const fetchData = useCallback(async () => {
     try {
-      const [configData, ticketsData, schedulerData] = await Promise.all([
+      const [configData, ticketsData, schedulerData, calendarData] = await Promise.all([
         api.getConfig(),
         api.getTickets(),
         api.getSchedulerStatus(),
+        api.getCalendar(),
       ]);
       setConfig(configData);
       setTickets(ticketsData.tickets);
       setHolidays(ticketsData.holidays || {});
+      setCalendar(calendarData);
       if (ticketsData.config?.hideHolidays !== undefined) {
         setHideHolidays(ticketsData.config.hideHolidays);
       }
@@ -69,17 +70,6 @@ export default function App() {
     setActiveTab((tab) => (tab === 'tickets' ? 'config' : 'tickets'));
   }, []);
 
-  // 点击日历日期，滚动到表格对应行
-  const handleDateClick = useCallback((date: string) => {
-    const row = document.querySelector(`[data-date="${date}"]`);
-    if (row) {
-      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      // 高亮一下
-      row.classList.add('bg-yellow-50');
-      setTimeout(() => row.classList.remove('bg-yellow-50'), 1500);
-    }
-  }, []);
-
   const dates = config ? generateDates(config.daysAhead) : [];
   const trains = config?.trains.filter((t) => t.enabled) || [];
 
@@ -97,39 +87,56 @@ export default function App() {
 
       <main className="max-w-[1400px] mx-auto px-4 py-6">
         {activeTab === 'tickets' && (
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* 左侧日历 */}
-            <CalendarView onDateClick={handleDateClick} />
+          <div className="space-y-4">
+            {trains.length === 0 ? (
+              <div className="text-center py-20 text-muted-foreground">
+                <p>暂无监听车次</p>
+                <p className="text-sm mt-2">请到「配置管理」添加车次</p>
+              </div>
+            ) : (
+              <>
+                {/* 统计信息 */}
+                {calendar && (
+                  <div className="flex flex-wrap items-center gap-4 text-sm">
+                    <span className="text-muted-foreground">
+                      往后30天共 <strong className="text-foreground">{calendar.workdayCount}</strong> 个工作日
+                    </span>
+                    {calendar.holidayRanges.length > 0 && (
+                      <span className="text-muted-foreground">
+                        节假日：
+                        {calendar.holidayRanges.map((range) => (
+                          <span key={range.name} className="ml-1">
+                            {range.name}
+                            <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full ml-1">
+                              {range.startDate.slice(5)}~{range.endDate.slice(5)} {range.days}天
+                            </span>
+                          </span>
+                        ))}
+                      </span>
+                    )}
+                  </div>
+                )}
 
-            {/* 右侧余票表格 */}
-            <div className="flex-1 min-w-0 space-y-4 overflow-x-auto" ref={tableRef}>
-              {trains.length === 0 ? (
-                <div className="text-center py-20 text-muted-foreground">
-                  <p>暂无监听车次</p>
-                  <p className="text-sm mt-2">请到「配置管理」添加车次</p>
-                </div>
-              ) : (
-                <>
-                  <FilterBar
-                    hideHolidays={hideHolidays}
-                    hideWeekends={hideWeekends}
-                    holidaysCount={Object.keys(holidays).length}
-                    onHideHolidaysChange={setHideHolidays}
-                    onHideWeekendsChange={setHideWeekends}
-                    onRefresh={fetchData}
-                  />
-                  <TicketsTable
-                    trains={trains}
-                    tickets={tickets}
-                    dates={dates}
-                    holidays={holidays}
-                    hideHolidays={hideHolidays}
-                    hideWeekends={hideWeekends}
-                    onSetCellStatus={handleSetCellStatus}
-                  />
-                </>
-              )}
-            </div>
+                <FilterBar
+                  hideHolidays={hideHolidays}
+                  hideWeekends={hideWeekends}
+                  holidaysCount={Object.keys(holidays).length}
+                  onHideHolidaysChange={setHideHolidays}
+                  onHideWeekendsChange={setHideWeekends}
+                  onRefresh={fetchData}
+                />
+                <TicketsTable
+                  trains={trains}
+                  tickets={tickets}
+                  dates={dates}
+                  holidays={holidays}
+                  calendarDays={calendar?.days || []}
+                  hideHolidays={hideHolidays}
+                  hideWeekends={hideWeekends}
+                  onSetCellStatus={handleSetCellStatus}
+                />
+              </>
+            )}
           </div>
         )}
 

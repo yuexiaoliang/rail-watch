@@ -9,13 +9,14 @@ import {
   TableHeader,
   TableRow,
 } from '../components/ui/table.js';
-import type { TicketGroup, TrainConfig, CellStatus } from '../../shared/types.js';
+import type { TicketGroup, TrainConfig, CellStatus, CalendarDayInfo } from '../../shared/types.js';
 
 interface TicketsTableProps {
   trains: TrainConfig[];
   tickets: TicketGroup[];
   dates: string[];
   holidays: Record<string, string>;
+  calendarDays: CalendarDayInfo[];
   hideHolidays: boolean;
   hideWeekends: boolean;
   onSetCellStatus: (trainNo: string, date: string, status: CellStatus, defaultSeat?: string) => void;
@@ -33,6 +34,7 @@ export const TicketsTable = memo(function TicketsTable({
   tickets,
   dates,
   holidays,
+  calendarDays,
   hideHolidays,
   hideWeekends,
   onSetCellStatus,
@@ -47,6 +49,8 @@ export const TicketsTable = memo(function TicketsTable({
   } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  const dayMap = new Map(calendarDays.map((d) => [d.date, d]));
+
   const filteredDates = dates.filter((date) => {
     const hasBoughtOnDate = trains.some((train) => {
       const t = tickets.find((x) => x.trainNo === train.trainNo && x.date === date);
@@ -54,9 +58,11 @@ export const TicketsTable = memo(function TicketsTable({
     });
     if (hideHolidays && holidays[date] && !hasBoughtOnDate) return false;
     if (hideWeekends) {
-      const d = new Date(date + 'T00:00:00');
-      const day = d.getDay();
-      if ((day === 0 || day === 6) && !hasBoughtOnDate) return false;
+      const dayInfo = dayMap.get(date);
+      const isWeekend = dayInfo?.isWeekend ?? false;
+      const isPublicWorkday = dayInfo?.isPublicWorkday ?? false;
+      // 只隐藏普通周末，保留补班日
+      if (isWeekend && !isPublicWorkday && !hasBoughtOnDate) return false;
     }
     return true;
   });
@@ -94,7 +100,7 @@ export const TicketsTable = memo(function TicketsTable({
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50 hover:bg-muted/50">
-            <TableHead className="w-24 sticky left-0 bg-muted/50 z-10 border-r py-2">日期</TableHead>
+            <TableHead className="w-28 sticky left-0 bg-muted/50 z-10 border-r py-2">日期</TableHead>
             {trains.map((train, idx) => (
               <TableHead
                 key={train.id}
@@ -113,23 +119,40 @@ export const TicketsTable = memo(function TicketsTable({
             const isHoliday = !!holidays[date];
             const day = new Date(date + 'T00:00:00').getDay();
             const isWeekend = day === 0 || day === 6;
+            const dayInfo = dayMap.get(date);
 
             // 整行背景：节假日优先于周末
             let rowBg = '';
             if (isHoliday) rowBg = 'bg-red-50/60';
             else if (isWeekend) rowBg = 'bg-blue-50/50';
 
+            // 日期列额外标记
+            const extraTag = dayInfo?.specialTag || (dayInfo?.isPublicWorkday ? '班' : null);
+
             return (
-              <TableRow key={date} data-date={date} className={`hover:bg-transparent ${rowBg}`}>
+              <TableRow key={date} className={`hover:bg-transparent ${rowBg}`}>
                 <td
-                  className={`px-3 py-3 whitespace-nowrap font-medium sticky left-0 border-r z-10 w-24 ${
+                  className={`px-3 py-2 whitespace-nowrap font-medium sticky left-0 border-r z-10 w-28 ${
                     isHoliday ? 'bg-red-50 text-red-700' : isWeekend ? 'bg-blue-50/80' : 'bg-background'
                   }`}
                 >
                   <div>{formatDate(date)}</div>
-                  {isHoliday && (
-                    <div className="text-xs text-red-600 mt-0.5 font-medium">{holidays[date]}</div>
-                  )}
+                  <div className="flex flex-wrap gap-1 mt-0.5">
+                    {isHoliday && (
+                      <span className="text-[10px] text-red-600 font-medium">{holidays[date]}</span>
+                    )}
+                    {extraTag && (
+                      <span className={`text-[10px] font-medium ${
+                        dayInfo?.specialTag?.includes('回乡') || dayInfo?.specialTag?.includes('返京')
+                          ? 'text-red-700 bg-red-100 px-1 rounded'
+                          : dayInfo?.isPublicWorkday
+                          ? 'text-amber-700 bg-amber-100 px-1 rounded'
+                          : ''
+                      }`}>
+                        {extraTag}
+                      </span>
+                    )}
+                  </div>
                 </td>
                 {trains.map((train) => {
                   const ticket = tickets.find((t) => t.trainNo === train.trainNo && t.date === date);
