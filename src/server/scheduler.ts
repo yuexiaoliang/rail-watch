@@ -1,4 +1,4 @@
-import { queryTickets, closeBrowser } from './scraper.js';
+import { queryTickets, closeBrowser, isBrowserClosedError } from './scraper.js';
 import {
   getConfig,
   getTickets,
@@ -80,7 +80,15 @@ async function runTask(task: Task): Promise<void> {
 
     console.log(`[${now}] Fetched ${task.trainNo} ${task.date}: ${results.length} seat types`);
   } catch (err) {
-    console.error(`[${new Date().toISOString()}] Failed ${task.trainNo} ${task.date}:`, (err as Error).message);
+    const message = (err as Error).message || '';
+    const isBrowserErr = isBrowserClosedError(err);
+    const log = isBrowserErr ? console.warn : console.error;
+    log(`[${new Date().toISOString()}] Failed ${task.trainNo} ${task.date}:`, message);
+
+    // 如果是浏览器连接已断开，强制清理状态，让后续任务重新启动浏览器
+    if (isBrowserErr) {
+      try { await closeBrowser(); } catch {}
+    }
   }
 }
 

@@ -3,28 +3,73 @@ import type { TicketInfo } from '../shared/types.js';
 
 let browser: Browser | null = null;
 let stationMap: Map<string, string> | null = null;
+let launching: Promise<Browser> | null = null;
 
 const STATION_URL = 'https://kyfw.12306.cn/otn/resources/js/framework/station_name.js?station_version=1.9280';
 
+function onDisconnected() {
+  console.warn('[Scraper] Browser disconnected');
+  browser = null;
+  stationMap = null;
+}
+
+export function isBrowserClosedError(err: unknown): boolean {
+  const message = (err as Error).message || '';
+  return (
+    message.includes('browser has been closed') ||
+    message.includes('Target page, context or browser has been closed') ||
+    message.includes('Browser has been disconnected') ||
+    message.includes('Protocol error')
+  );
+}
+
 export async function getBrowser(): Promise<Browser> {
-  if (!browser) {
-    browser = await chromium.launch({
-      headless: true,
-      args: ['--disable-blink-features=AutomationControlled'],
-    });
+  if (browser?.isConnected()) {
+    return browser;
   }
-  return browser;
+
+  if (launching) {
+    return launching;
+  }
+
+  launching = (async () => {
+    try {
+      if (browser) {
+        try { browser.off('disconnected', onDisconnected); } catch {}
+        try { await browser.close(); } catch {}
+      }
+      const b = await chromium.launch({
+        headless: true,
+        args: ['--disable-blink-features=AutomationControlled'],
+      });
+      b.on('disconnected', onDisconnected);
+      browser = b;
+      console.log('[Scraper] Browser launched');
+      return b;
+    } finally {
+      launching = null;
+    }
+  })();
+
+  return launching;
 }
 
 export async function closeBrowser() {
-  if (browser) {
-    await browser.close();
-    browser = null;
-    stationMap = null;
+  if (launching) {
+    try { await launching; } catch {}
+  }
+  const b = browser;
+  browser = null;
+  stationMap = null;
+  if (b) {
+    try { b.off('disconnected', onDisconnected); } catch {}
+    try { await b.close(); } catch (err) {
+      console.warn('[Scraper] Error closing browser:', (err as Error).message);
+    }
   }
 }
 
-async function loadStationMap(): Promise<Map<string, string>> {
+async function loadStationMapInternal(): Promise<Map<string, string>> {
   if (stationMap) return stationMap;
 
   const b = await getBrowser();
@@ -47,7 +92,27 @@ async function loadStationMap(): Promise<Map<string, string>> {
     stationMap = map;
     return map;
   } finally {
-    await page.close();
+    try {
+      await page.close();
+    } catch (closeErr) {
+      if (!isBrowserClosedError(closeErr)) {
+        console.warn('[Scraper] Error closing station page:', (closeErr as Error).message);
+      }
+    }
+  }
+}
+
+export async function loadStationMap(): Promise<Map<string, string>> {
+  try {
+    return await loadStationMapInternal();
+  } catch (err) {
+    if (isBrowserClosedError(err)) {
+      console.warn('[Scraper] Browser closed while loading station map, retrying once...');
+      browser = null;
+      stationMap = null;
+      return await loadStationMapInternal();
+    }
+    throw err;
   }
 }
 
@@ -73,7 +138,7 @@ const SEAT_INDEX_MAP: Record<string, number> = {
   wz: 26,   // 无座
 };
 
-export async function queryTickets(
+async function queryTicketsInternal(
   trainNo: string,
   fromStation: string,
   toStation: string,
@@ -203,6 +268,32 @@ export async function queryTickets(
 
     return results;
   } finally {
-    await page.close();
+    try {
+      await page.close();
+    } catch (closeErr) {
+      if (!isBrowserClosedError(closeErr)) {
+        console.warn('[Scraper] Error closing ticket page:', (closeErr as Error).message);
+      }
+    }
+  }
+}
+
+export async function queryTickets(
+  trainNo: string,
+  fromStation: string,
+  toStation: string,
+  date: string,
+  seatTypes: string[],
+): Promise<RawTicket[]> {
+  try {
+    return await queryTicketsInternal(trainNo, fromStation, toStation, date, seatTypes);
+  } catch (err) {
+    if (isBrowserClosedError(err)) {
+      console.warn('[Scraper] Browser closed during query, resetting and retrying once...');
+      browser = null;
+      stationMap = null;
+      return await queryTicketsInternal(trainNo, fromStation, toStation, date, seatTypes);
+    }
+    throw err;
   }
 }
