@@ -66,6 +66,14 @@ export default function App() {
     [fetchData]
   );
 
+  const handleReorderTrains = useCallback(
+    async (trains: AppConfig['trains']) => {
+      await api.updateConfig({ trains });
+      fetchData();
+    },
+    [fetchData]
+  );
+
   const handleToggleTab = useCallback(() => {
     setActiveTab((tab) => (tab === 'tickets' ? 'config' : 'tickets'));
   }, []);
@@ -142,7 +150,7 @@ export default function App() {
         {activeTab === 'config' && (
           <div className="space-y-6">
             <AddTrainForm onAdded={fetchData} />
-            <TrainList trains={config?.trains || []} onDeleted={fetchData} />
+            <TrainList trains={config?.trains || []} onDeleted={fetchData} onReordered={handleReorderTrains} />
             <SettingsPanel
               daysAhead={config?.daysAhead || 15}
               intervalMinutes={config?.intervalMinutes || 5}

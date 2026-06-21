@@ -99,12 +99,12 @@ export const TicketsTable = memo(function TicketsTable({
     <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
       <Table>
         <TableHeader>
-          <TableRow className="bg-muted/50 hover:bg-muted/50">
-            <TableHead className="w-28 sticky left-0 bg-muted/50 z-10 border-r py-2">日期</TableHead>
+          <TableRow className="bg-muted/50 hover:bg-muted/50 relative">
+            <TableHead className="w-28 sticky left-0 bg-muted z-20 border-r py-2">日期</TableHead>
             {trains.map((train, idx) => (
               <TableHead
                 key={train.id}
-                className={`text-center min-w-[100px] py-2 ${idx < trains.length - 1 ? 'border-r' : ''}`}
+                className={`text-center min-w-[100px] py-2 relative z-0 ${idx < trains.length - 1 ? 'border-r' : ''}`}
               >
                 <div className="font-bold text-base">{train.trainNo}</div>
                 <div className="text-xs text-muted-foreground mt-1 whitespace-nowrap">
@@ -132,7 +132,7 @@ export const TicketsTable = memo(function TicketsTable({
             return (
               <TableRow key={date} className={`hover:bg-transparent ${rowBg}`}>
                 <td
-                  className={`px-3 py-2 whitespace-nowrap font-medium sticky left-0 border-r z-10 w-28 ${
+                  className={`px-3 py-2 whitespace-nowrap font-medium sticky left-0 border-r z-20 w-28 ${
                     isHoliday ? 'bg-red-50 text-red-700' : isWeekend ? 'bg-blue-50/80' : 'bg-background'
                   }`}
                 >
