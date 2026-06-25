@@ -32,6 +32,13 @@ export const STATUS_LABELS: Record<CellStatus, string> = {
 };
 
 // Domain types
+export type TrainDirection = 'outbound' | 'return';
+
+export const DIRECTION_LABELS: Record<TrainDirection, string> = {
+  outbound: '去',
+  return: '反',
+};
+
 export interface TrainConfig {
   id: string;
   trainNo: string;
@@ -39,6 +46,7 @@ export interface TrainConfig {
   toStation: string;
   seatTypes: string[];
   enabled: boolean;
+  direction?: TrainDirection;
 }
 
 export interface AppConfig {

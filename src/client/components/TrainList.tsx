@@ -1,6 +1,6 @@
 import { memo, useCallback, useState } from 'react';
 import { GripVertical, ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
-import { SEAT_LABELS } from '../../shared/types.js';
+import { SEAT_LABELS, DIRECTION_LABELS } from '../../shared/types.js';
 import { api } from '../api.js';
 import { Button } from '../components/ui/button.js';
 import { Badge } from '../components/ui/badge.js';
@@ -10,15 +10,16 @@ import {
   CardHeader,
   CardTitle,
 } from '../components/ui/card.js';
-import type { TrainConfig } from '../../shared/types.js';
+import type { TrainConfig, TrainDirection } from '../../shared/types.js';
 
 interface TrainListProps {
   trains: TrainConfig[];
   onDeleted: () => void;
   onReordered?: (trains: TrainConfig[]) => void;
+  onUpdated?: (trains: TrainConfig[]) => void;
 }
 
-export const TrainList = memo(function TrainList({ trains, onDeleted, onReordered }: TrainListProps) {
+export const TrainList = memo(function TrainList({ trains, onDeleted, onReordered, onUpdated }: TrainListProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
 
@@ -34,6 +35,11 @@ export const TrainList = memo(function TrainList({ trains, onDeleted, onReordere
     reordered.splice(toIndex, 0, moved);
     onReordered?.(reordered);
   }, [trains, onReordered]);
+
+  const setDirection = useCallback((id: string, direction: TrainDirection | undefined) => {
+    const updated = trains.map((t) => (t.id === id ? { ...t, direction } : t));
+    onUpdated?.(updated);
+  }, [trains, onUpdated]);
 
   const handleDragStart = useCallback((e: React.DragEvent<HTMLDivElement>, id: string) => {
     const target = e.target as HTMLElement;
@@ -140,7 +146,14 @@ export const TrainList = memo(function TrainList({ trains, onDeleted, onReordere
                   )}
 
                   <div className="flex-1 min-w-0 pt-0.5">
-                    <div className="font-medium">{train.trainNo}</div>
+                    <div className="font-medium flex items-center gap-1.5">
+                      {train.trainNo}
+                      {train.direction && (
+                        <Badge variant="secondary" className="text-[10px]">
+                          {DIRECTION_LABELS[train.direction]}
+                        </Badge>
+                      )}
+                    </div>
                     <div className="text-sm text-muted-foreground mt-0.5">
                       {train.fromStation} → {train.toStation}
                     </div>
@@ -150,6 +163,25 @@ export const TrainList = memo(function TrainList({ trains, onDeleted, onReordere
                           {SEAT_LABELS[s]}
                         </Badge>
                       ))}
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-2">
+                      <span className="text-xs text-muted-foreground">方向</span>
+                      <Button
+                        type="button"
+                        variant={train.direction === 'outbound' ? 'default' : 'outline'}
+                        size="xs"
+                        onClick={() => setDirection(train.id, train.direction === 'outbound' ? undefined : 'outbound')}
+                      >
+                        {DIRECTION_LABELS.outbound}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={train.direction === 'return' ? 'default' : 'outline'}
+                        size="xs"
+                        onClick={() => setDirection(train.id, train.direction === 'return' ? undefined : 'return')}
+                      >
+                        {DIRECTION_LABELS.return}
+                      </Button>
                     </div>
                   </div>
 

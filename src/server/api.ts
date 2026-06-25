@@ -45,6 +45,7 @@ api.post('/trains', async (c) => {
     toStation: body.toStation,
     seatTypes: body.seatTypes || ['ze'],
     enabled: body.enabled !== false,
+    direction: ['outbound', 'return'].includes(body.direction) ? body.direction : undefined,
   };
   config.trains.push(newTrain);
   saveConfig(config);
@@ -244,6 +245,7 @@ api.get('/help', (c) => {
           fromStation: 'string (如 张家口)',
           toStation: 'string (如 清河)',
           seatTypes: "string[] (可选, 默认 ['ze']) — ze=二等座, zy=一等座, swz=商务座, yw=硬卧, rw=软卧, yz=硬座, wz=无座",
+          direction: "string? ('outbound' | 'return') — 去程/返程标记，用于节假日前后重点提示",
         },
       },
       {

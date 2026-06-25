@@ -1,6 +1,6 @@
 import { memo, useState, useCallback, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { formatDate, STATUS_LABELS } from '../../shared/utils.js';
+import { formatDate, STATUS_LABELS, getRushInfo } from '../../shared/utils.js';
 import { TicketCell } from './TicketCell.js';
 import {
   Table,
@@ -156,6 +156,7 @@ export const TicketsTable = memo(function TicketsTable({
                 </td>
                 {trains.map((train) => {
                   const ticket = tickets.find((t) => t.trainNo === train.trainNo && t.date === date);
+                  const rushInfo = getRushInfo(date, train.direction, calendarDays);
                   return (
                     <TicketCell
                       key={train.id}
@@ -163,6 +164,7 @@ export const TicketsTable = memo(function TicketsTable({
                       date={date}
                       ticket={ticket}
                       rowBg={rowBg}
+                      rushInfo={rushInfo}
                       onContextMenu={handleCellContextMenu}
                     />
                   );

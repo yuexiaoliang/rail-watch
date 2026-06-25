@@ -1,5 +1,6 @@
 import { memo, useCallback, useRef } from 'react';
 import { formatTime, seatDisplay, STATUS_LABELS } from '../../shared/utils.js';
+import { DIRECTION_LABELS } from '../../shared/types.js';
 import type { TicketGroup, TrainConfig, CellStatus } from '../../shared/types.js';
 
 interface TicketCellProps {
@@ -7,6 +8,7 @@ interface TicketCellProps {
   date: string;
   ticket: TicketGroup | undefined;
   rowBg?: string;
+  rushInfo?: { isRush: boolean; rushText?: string };
   onContextMenu: (
     trainNo: string,
     date: string,
@@ -55,6 +57,7 @@ export const TicketCell = memo(function TicketCell({
   date,
   ticket,
   rowBg,
+  rushInfo,
   onContextMenu,
 }: TicketCellProps) {
   const status: CellStatus = ticket?.status || (ticket?.bought ? 'bought' : 'none');
@@ -171,9 +174,11 @@ export const TicketCell = memo(function TicketCell({
   })();
 
   const style = STATUS_STYLES[status];
+  const isRushDay = status === 'none' && rushInfo?.isRush;
+  const rushClass = isRushDay ? 'bg-amber-50/80 border-l-4 border-l-amber-400' : '';
   const bgClass = style.bg
     ? `${style.bg} ${style.border ? `border ${style.border}` : ''}`
-    : rowBg || '';
+    : `${rowBg || ''} ${rushClass}`.trim();
 
   return (
     <td
@@ -184,6 +189,11 @@ export const TicketCell = memo(function TicketCell({
       onPointerLeave={handlePointerLeave}
       title={`长按设置状态 | ${activeQt ? `采集于 ${formatTime(activeQt)}` : '尚未采集'}`}
     >
+      {isRushDay && train.direction && (
+        <div className="absolute top-0.5 left-0.5 text-[8px] text-amber-700 font-bold leading-none">
+          {DIRECTION_LABELS[train.direction]}抢
+        </div>
+      )}
       <div className={`flex flex-col items-center gap-0.5 ${style.text}`}>{mainContent}</div>
       {status === 'none' && (isHoubu || activeQt) && (
         <div className="absolute bottom-0.5 right-1 text-[8px] leading-none flex items-center gap-1">

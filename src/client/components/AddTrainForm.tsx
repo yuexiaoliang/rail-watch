@@ -1,5 +1,5 @@
 import { memo, useState, useCallback } from 'react';
-import { SEAT_OPTIONS } from '../../shared/types.js';
+import { SEAT_OPTIONS, DIRECTION_LABELS } from '../../shared/types.js';
 import { api } from '../api.js';
 import { Button } from '../components/ui/button.js';
 import { Input } from '../components/ui/input.js';
@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '../components/ui/card.js';
+import type { TrainDirection } from '../../shared/types.js';
 
 interface AddTrainFormProps {
   onAdded: () => void;
@@ -21,12 +22,13 @@ export const AddTrainForm = memo(function AddTrainForm({ onAdded }: AddTrainForm
     fromStation: '',
     toStation: '',
     seatTypes: ['ze'] as string[],
+    direction: undefined as TrainDirection | undefined,
   });
 
   const handleAdd = useCallback(async () => {
     if (!newTrain.trainNo || !newTrain.fromStation || !newTrain.toStation) return;
     await api.addTrain(newTrain);
-    setNewTrain({ trainNo: '', fromStation: '', toStation: '', seatTypes: ['ze'] });
+    setNewTrain({ trainNo: '', fromStation: '', toStation: '', seatTypes: ['ze'], direction: undefined });
     onAdded();
   }, [newTrain, onAdded]);
 
@@ -76,6 +78,33 @@ export const AddTrainForm = memo(function AddTrainForm({ onAdded }: AddTrainForm
               </label>
             </div>
           ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">方向</span>
+          <Button
+            type="button"
+            variant={newTrain.direction === 'outbound' ? 'default' : 'outline'}
+            size="xs"
+            onClick={() => setNewTrain((prev) => ({ ...prev, direction: 'outbound' }))}
+          >
+            {DIRECTION_LABELS.outbound}
+          </Button>
+          <Button
+            type="button"
+            variant={newTrain.direction === 'return' ? 'default' : 'outline'}
+            size="xs"
+            onClick={() => setNewTrain((prev) => ({ ...prev, direction: 'return' }))}
+          >
+            {DIRECTION_LABELS.return}
+          </Button>
+          <Button
+            type="button"
+            variant={newTrain.direction === undefined ? 'default' : 'outline'}
+            size="xs"
+            onClick={() => setNewTrain((prev) => ({ ...prev, direction: undefined }))}
+          >
+            不标
+          </Button>
         </div>
       </CardContent>
     </Card>
